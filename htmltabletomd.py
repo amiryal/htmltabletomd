@@ -12,15 +12,17 @@ def _transform_cell_content(value: str, conversion_ind: bool = False) -> str:
     return value
 
 
+ALIGNMENT_OPTIONS = {"left": " :--- ", "center": " :---: ", "right": " ---: "}
+
+
 def convert_table(
     html: str, content_conversion_ind: bool = False, all_cols_alignment: str = "left"
 ) -> str:
-    alignment_options = {"left": " :--- ", "center": " :---: ", "right": " ---: "}
-    if all_cols_alignment not in alignment_options.keys():
+    if all_cols_alignment not in ALIGNMENT_OPTIONS.keys():
         raise ValueError(
             "Invalid alignment option for {!r} arg. "
             "Expected one of: {}".format(
-                "all_cols_alignment", list(alignment_options.keys())
+                "all_cols_alignment", list(ALIGNMENT_OPTIONS.keys())
             )
         )
 
@@ -69,7 +71,7 @@ def convert_table(
         [""]
         + ([" "] * len(table[0]) if not table_headings else table_headings)
         + ["\n"]
-        + [alignment_options[all_cols_alignment]] * len(table[0])
+        + [ALIGNMENT_OPTIONS[all_cols_alignment]] * len(table[0])
         + ["\n"]
     )
 
@@ -77,3 +79,33 @@ def convert_table(
         "|".join([""] + row + ["\n"]) for row in table_body
     )
     return md_table
+
+
+def main():
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(
+        prog="HTML Table to GF-Markdown converter",
+        description="Convert an HTML table Markdown syntax",
+        epilog="Reads one HTML table from standard input and writes Markdown to standard output.",
+    )
+    alignment_choices = list(ALIGNMENT_OPTIONS.keys())
+    parser.add_argument(
+        "--align", choices=alignment_choices, default=alignment_choices[0]
+    )
+    parser.add_argument(
+        "--convert-cells",
+        action="store_true",
+        help="convert contents inside table cells",
+    )
+    args = parser.parse_args()
+    input = sys.stdin.read()
+    output = convert_table(
+        input, all_cols_alignment=args.align, content_conversion_ind=args.convert_cells
+    )
+    sys.stdout.write(output)
+
+
+if __name__ == "__main__":
+    main()
